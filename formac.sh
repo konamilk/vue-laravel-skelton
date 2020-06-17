@@ -1,0 +1,102 @@
+#!/bin/bash
+
+#from tyamahori/laravel-docker-env
+
+# プロジェクト名定義
+COMPOSE_PROJECT_NAME="vue-laravel-skelton"
+
+# コンテナ名定義
+NGINX_NAME="${COMPOSE_PROJECT_NAME}_laravel"
+APP_NAME="${COMPOSE_PROJECT_NAME}_php-fpm"
+
+# 実行コマンド定義
+RUN_NGINX="docker exec -it ${NGINX_NAME}"
+RUN_APP="docker exec -it ${APP_NAME}"
+
+# コンテナ内のパス定義
+REMOTE_LARAVEL_DIR="/opt/laravel"
+REMOTE_VENDOR_DIR=$REMOTE_LARAVEL_DIR/vendor
+
+# ローカルのパス定義
+LOCAL_LARAVEL_DIR="./laravel"
+LOCAL_VENDOR_DIR=$LOCAL_LARAVEL_DIR/vendor
+
+case "$1" in
+
+"setup")
+  rm -rf $LOCAL_VENDOR_DIR
+  docker-compose down -v
+  docker-compose up -d --build
+  $RUN_APP dockerize -timeout 60s -wait tcp://laravel-docker-for-mac-mysql:3306
+  $RUN_APP ./artisan storage:link
+  $RUN_APP ./artisan ide-helper:generate
+  $RUN_APP ./artisan ide-helper:models --nowrite
+  $RUN_APP ./artisan migrate
+  docker cp $APP_NAME:$REMOTE_VENDOR_DIR $LOCAL_LARAVEL_DIR
+  docker cp $APP_NAME:$REMOTE_LARAVEL_DIR/_ide_helper.php $LOCAL_LARAVEL_DIR
+  docker cp $APP_NAME:$REMOTE_LARAVEL_DIR/_ide_helper_models.php $LOCAL_LARAVEL_DIR
+  docker image prune -f
+  ;;
+
+"copy-vendor-dir")
+  rm -rf $LOCAL_VENDOR_DIR
+  docker cp $APP_NAME:$REMOTE_VENDOR_DIR $LOCAL_LARAVEL_DIR
+  ;;
+
+"up")
+  docker-compose up -d
+  ;;
+
+"down")
+  docker-compose down
+  ;;
+
+"logs")
+  docker-compose logs -f
+  ;;
+
+"php")
+  docker exec -it $APP_NAME /bin/bash
+  ;;
+
+"nginx")
+  docker exec -it $NGINX_NAME /bin/bash
+  ;;
+
+"artisan")
+  $RUN_APP ./artisan ${@:2}
+  ;;
+
+"test")
+  $RUN_APP ./vendor/bin/phpunit
+  ;;
+
+"composer")
+  rm -rf $LOCAL_VENDOR_DIR
+  $RUN_APP composer ${@:2}
+  docker cp $APP_NAME:$REMOTE_VENDOR_DIR $LOCAL_LARAVEL_DIR
+  ;;
+
+"cache-clear")
+  $RUN_APP ./artisan cache:clear
+  $RUN_APP ./artisan config:clear
+  $RUN_APP ./artisan route:clear
+  $RUN_APP ./artisan view:clear
+  ;;
+
+"test-github-actions")
+  RUN_APP="docker exec -i ${APP_NAME}"
+  docker-compose up -d --build
+  $RUN_APP cp .env.example .env
+  $RUN_APP composer install
+  $RUN_APP chmod -R 777 storage
+  $RUN_APP ./artisan key:generate
+  $RUN_APP dockerize -timeout 60s -wait tcp://laravel-docker-for-mac-mysql:3306
+  $RUN_APP ./artisan migrate
+  $RUN_APP ./vendor/bin/phpunit
+  ;;
+
+*)
+  $RUN_APP ${@:1}
+  ;;
+esac
