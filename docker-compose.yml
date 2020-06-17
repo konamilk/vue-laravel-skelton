@@ -2,6 +2,7 @@ version: '3'
 services:
   laravel:
     image: nginx:stable-alpine
+    container_name: vue-laravel-skelton_laravel-nginx
     ports:
       - 7001:80
     volumes:
@@ -12,8 +13,8 @@ services:
     container_name: vue-laravel-skelton_php-fpm
     volumes:
       - ./laravel:/var/www/html
-      - vendor-volume:/opt/laravel/vendor
-      - storage-volume:/opt/laravel/storage
+#      - vendor-volume:/opt/laravel/vendor
+#      - storage-volume:/opt/laravel/storage
   reverse-proxy:
     image: nginx:stable-alpine
     container_name: vue-laravel-skelton_reverse-proxy
@@ -30,21 +31,22 @@ services:
    image: mysql:8.0
    container_name: vue-laravel-skelton_mysql
    environment:
-     MYSQL_DATABASE: lara_db_02
-     MYSQL_ROOT_PASSWORD: lara_db_02
+     MYSQL_DATABASE: laravel
+     MYSQL_ROOT_PASSWORD: laravel
      MYSQL_USER: laravel
      MYSQL_PASSWORD: laravel
      TZ: Asia/Tokyo
    ports:
      - 3307:3306
-#   volumes:
-#     - db-volume:/var/lib/mysql
+   volumes:
 #     - .mysql/data:/var/lib/mysql
+     - ./initdb.d:/docker-entrypoint-initdb.d
+#     - db-volume:/var/lib/mysql
 
-volumes:
-  storage-volume:
-    driver: local
-  vendor-volume:
-    driver: local
+#volumes:
+#  storage-volume:
+#    driver: local
+#  vendor-volume:
+#    driver: local
 #  db-volume:
 #    driver: local

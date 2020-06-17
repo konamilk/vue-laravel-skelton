@@ -6,7 +6,7 @@
 COMPOSE_PROJECT_NAME="vue-laravel-skelton"
 
 # コンテナ名定義
-NGINX_NAME="${COMPOSE_PROJECT_NAME}_laravel"
+NGINX_NAME="${COMPOSE_PROJECT_NAME}_laravel_nginx"
 APP_NAME="${COMPOSE_PROJECT_NAME}_php-fpm"
 
 # 実行コマンド定義
