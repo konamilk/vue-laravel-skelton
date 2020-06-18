@@ -27,7 +27,7 @@ case "$1" in
   rm -rf $LOCAL_VENDOR_DIR
   docker-compose down -v
   docker-compose up -d --build
-  $RUN_APP dockerize -timeout 60s -wait tcp://laravel-docker-for-mac-mysql:3306
+  $RUN_APP dockerize -timeout 60s -wait tcp://mysql:3306
   $RUN_APP ./artisan storage:link
   $RUN_APP ./artisan ide-helper:generate
   $RUN_APP ./artisan ide-helper:models --nowrite
